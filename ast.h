@@ -31,13 +31,17 @@
 
 #include <stdlib.h>   // for NULL
 #include "location.h"
+#include "hashtable.h"
 #include <iostream>
+
+class Decl;
 
 class Node 
 {
   protected:
     yyltype *location;
     Node *parent;
+    Hashtable<Decl*> *scope;
 
   public:
     Node(yyltype loc);
@@ -46,6 +50,7 @@ class Node
     yyltype *GetLocation()   { return location; }
     void SetParent(Node *p)  { parent = p; }
     Node *GetParent()        { return parent; }
+    virtual void Check()     { std::cout << "Base check\n"; }
 };
    
 
