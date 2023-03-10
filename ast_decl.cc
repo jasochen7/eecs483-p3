@@ -5,6 +5,8 @@
 #include "ast_decl.h"
 #include "ast_type.h"
 #include "ast_stmt.h"
+#include "errors.h"
+#include <string>
         
          
 Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
@@ -16,6 +18,33 @@ Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
 VarDecl::VarDecl(Identifier *n, Type *t) : Decl(n) {
     Assert(n != NULL && t != NULL);
     (type=t)->SetParent(this);
+}
+
+void VarDecl::Check() {
+    // If type is named
+    NamedType* type = dynamic_cast<NamedType*>(this->type);
+    if (type){
+      Node *program = this->parent;
+      // Look for parent
+      while (program->parent != NULL) {
+        program = program->parent;
+      }
+      Identifier* type_id = type->id;
+      std::string type_name = type_id->name;
+      // Throw error if namedtype is not in program's scope
+      if (program->scope.find(type_name) == program->scope.end()){
+        ReportError::IdentifierNotDeclared(type_id, reasonT::LookingForType);
+      } 
+      // We found the namedtype, must ensure it is a Class/Interface
+      else {
+        Decl* type_decl = program->scope[type_name];
+        ClassDecl* class_check = dynamic_cast<ClassDecl*>(type_decl);
+        InterfaceDecl* interface_check = dynamic_cast<InterfaceDecl*>(type_decl);
+        if (!(class_check || interface_check)) {
+          ReportError::IdentifierNotDeclared(type_id, reasonT::LookingForType);
+        }
+      }
+    }
 }
   
 

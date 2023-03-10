@@ -1,0 +1,18 @@
+
+*** Error line 5.
+interface Printable {
+          ^^^^^^^^^
+*** Declaration of 'Printable' here conflicts with declaration on line 1
+
+
+*** Error line 10.
+class Number implements Printable {
+                        ^^^^^^^^^
+*** No declaration found for interface 'Printable'
+
+
+*** Error line 19.
+     p.x = 6;
+       ^
+*** Printable field 'x' only accessible within class scope
+

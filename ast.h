@@ -31,17 +31,18 @@
 
 #include <stdlib.h>   // for NULL
 #include "location.h"
+#include <unordered_map>
 #include "hashtable.h"
+#include <string>
 #include <iostream>
-
 class Decl;
 
 class Node 
 {
-  protected:
+  public:
     yyltype *location;
     Node *parent;
-    Hashtable<Decl*> *scope;
+    std::unordered_map<std::string, Decl*> scope;
 
   public:
     Node(yyltype loc);
@@ -56,7 +57,7 @@ class Node
 
 class Identifier : public Node 
 {
-  protected:
+  public:
     char *name;
     
   public:

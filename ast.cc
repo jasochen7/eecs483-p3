@@ -16,7 +16,6 @@ Node::Node(yyltype loc) {
 Node::Node() {
     location = NULL;
     parent = NULL;
-    scope = new Hashtable<Decl*>();
 }
 	 
 Identifier::Identifier(yyltype loc, const char *n) : Node(loc) {

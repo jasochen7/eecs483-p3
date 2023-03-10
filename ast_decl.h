@@ -22,7 +22,7 @@ class Stmt;
 
 class Decl : public Node 
 {
-  protected:
+  public:
     Identifier *id;
   
   public:
@@ -37,6 +37,7 @@ class VarDecl : public Decl
     
   public:
     VarDecl(Identifier *name, Type *type);
+    void Check();
 };
 
 class ClassDecl : public Decl 

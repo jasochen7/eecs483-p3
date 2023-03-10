@@ -36,7 +36,7 @@ class Type : public Node
 
 class NamedType : public Type 
 {
-  protected:
+  public:
     Identifier *id;
     
   public:

@@ -1,0 +1,6 @@
+int x;
+class Dog {
+  int y;
+}
+
+Dog a;

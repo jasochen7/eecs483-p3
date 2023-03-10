@@ -6,6 +6,8 @@
 #include "ast_type.h"
 #include "ast_decl.h"
 #include "ast_expr.h"
+#include <iostream>
+#include "errors.h"
 
 
 Program::Program(List<Decl*> *d) {
@@ -21,6 +23,23 @@ void Program::Check() {
      *      checking itself, which makes for a great use of inheritance
      *      and polymorphism in the node classes.
      */
+    // Construct program's scope
+    for (int i = 0; i < decls->NumElements(); ++i){
+      Decl* currentDecl = decls->Nth(i);
+      const char* name = currentDecl->id->name;
+      // report if this decl already exists yo
+      if (scope.find(name) != scope.end()){
+        Decl* oldDecl = scope[name];
+        ReportError::DeclConflict(currentDecl, oldDecl);
+      } else{
+        scope[name] = currentDecl;
+      }
+    }
+
+    // Checking children
+    for (int i = 0; i < decls->NumElements(); ++i){
+      decls->Nth(i)->Check();
+    }
 }
 
 StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
