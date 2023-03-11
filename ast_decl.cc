@@ -7,8 +7,13 @@
 #include "ast_stmt.h"
 #include "errors.h"
 #include <string>
+#include <vector>
         
-         
+std::string Decl::GetName(){
+    return this->id->name;
+}
+
+
 Decl::Decl(Identifier *n) : Node(*n->GetLocation()) {
     Assert(n != NULL);
     (id=n)->SetParent(this); 
@@ -55,8 +60,117 @@ ClassDecl::ClassDecl(Identifier *n, NamedType *ex, List<NamedType*> *imp, List<D
     if (extends) extends->SetParent(this);
     (implements=imp)->SetParentAll(this);
     (members=m)->SetParentAll(this);
+    extendedClass = NULL;
 }
 
+void ClassDecl::Check() {
+    Node *program = this->parent;
+    while (program->parent != NULL) {
+      program = program->parent;
+    }
+    //check if extends base class exists
+    ClassDecl* base_class = NULL;
+    if (this->extends) {
+      NamedType* base_type = this->extends;
+      string base_type_name = base_type->GetName();
+      base_class = dynamic_cast<ClassDecl*>(FindDecl(base_type_name));
+      // If it's not defined, throw an error
+      if (base_class == NULL){
+        ReportError::IdentifierNotDeclared(base_type->id, reasonT::LookingForClass);
+      } else {
+        this->extendedClass = base_class;
+      }
+    }
+   //check if implements interfaces exist
+   for (int i = 0; i < this->implements->NumElements(); i++) {
+      NamedType* base_type = this->implements->Nth(i);
+      string base_type_name = base_type->GetName();
+      // If it's not defined, throw an error
+      InterfaceDecl *interface = dynamic_cast<InterfaceDecl*>(FindDecl(base_type_name));
+      if (!interface){
+        ReportError::IdentifierNotDeclared(base_type->id, reasonT::LookingForInterface);
+      } else {
+        this->interfaces[base_type] = interface;
+      }
+   }
+
+   // construct scope of class when extends base class
+   if (base_class) {
+      for (int i = 0; i < this->members->NumElements(); i++) {
+         Decl* member = this->members->Nth(i);
+         std::string member_name = member->GetName();
+         //check if name is in base class scope
+         if (base_class->scope.find(member_name) != base_class->scope.end()) {
+           Decl* base_decl = base_class->scope[member_name];
+           //check if decl is func
+           FnDecl *base_function_decl = dynamic_cast<FnDecl*>(base_decl);
+           if (base_function_decl) {
+             FnDecl* member_function_decl = dynamic_cast<FnDecl*>(member);
+             // if this member is also a function
+             if (member_function_decl){
+              // Ensure that the signatures match
+              if (!member_function_decl->isSameSignature(base_function_decl)) {
+                ReportError::OverrideMismatch(base_function_decl);
+              }
+             } else {
+              ReportError::DeclConflict(member, base_decl);
+             }
+           } else {
+            //else it is a varDecl -> error
+            ReportError::DeclConflict(member, base_decl);
+           }
+           
+         }
+         // check if name is in current scope
+         else {
+           if (this->scope.find(member_name) != this->scope.end()) {
+              ReportError::DeclConflict(member, this->scope[member_name]);
+           } else {
+              this->scope[member_name] = member;
+           }
+         }
+      }
+   } else {
+     InitScope(this->members);
+   }
+   /* 
+   If function is inherited from a class, we may want to store this information.
+   
+   */
+   // If this class implements other jawns
+   for (int i = 0; i < this->implements->NumElements(); ++i){
+    NamedType* interface_type = this->implements->Nth(i);
+    InterfaceDecl* interface = this->interfaces[interface_type];
+    // Validate Inferfaces
+    if (!this->ValidateInterface(interface)) {
+      ReportError::InterfaceNotImplemented(this, interface_type);
+    }
+   }
+}
+
+bool ClassDecl::ValidateInterface(InterfaceDecl* interface){
+  for (int i = 0; i < interface->members->NumElements(); ++i){
+    Decl* member = interface->members->Nth(i);
+    FnDecl* impl_function = dynamic_cast<FnDecl*>(member);
+    if (impl_function) {
+      std::string function_name = impl_function->GetName();
+      // we don't have jawn
+      if (this->scope.find(function_name) == this->scope.end()){
+        return false;
+      }
+      FnDecl* class_func = dynamic_cast<FnDecl*>(this->scope[function_name]);
+      // shit's not a function
+      if (!class_func){
+        return false;
+      }
+      // shit's not the same function
+      if (!impl_function->isSameSignature(class_func)){
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 InterfaceDecl::InterfaceDecl(Identifier *n, List<Decl*> *m) : Decl(n) {
     Assert(n != NULL && m != NULL);
@@ -75,5 +189,42 @@ void FnDecl::SetFunctionBody(Stmt *b) {
     (body=b)->SetParent(this);
 }
 
+bool isSameType(Type* first, Type* second){
+  NamedType* other_type = dynamic_cast<NamedType*>(second);
+  NamedType* our_type = dynamic_cast<NamedType*>(first);
+  // If one is a named type and the other is not
+  if ((!our_type && other_type) || (our_type && other_type)){
+    return false;
+  }
+  else if (our_type){
+    if (our_type->GetName() != other_type->GetName()){
+      return false;
+    }
+  }
+  else {
+    if (!first->IsEquivalentTo(second)){
+      return false;
+    } 
+  }
+  return true;
+}
+
+bool FnDecl::isSameSignature(FnDecl *other){
+  if (!isSameType(this->returnType, other->returnType)){
+    return false;
+  }
+  if (this->formals->NumElements() != other->formals->NumElements()) {
+    return false;
+  }
+  // Validate formals types
+  for (int i = 0; i < this->formals->NumElements(); i++) {
+    Type* our_type = this->formals->Nth(i)->type;
+    Type* other_type = other->formals->Nth(i)->type;
+    if (!isSameType(our_type, other_type)) {
+      return false;
+    }
+  }
+  return true;
+}
 
 

@@ -1,6 +1,18 @@
-int x;
-class Dog {
-  int y;
+interface Animal {
+  void init();
 }
 
-Dog a;
+interface Human {
+  Animal check(Human h);
+}
+
+class Dog implements Animal, Human {
+  void init() {
+    string name;
+    int name;
+  }
+  Animal check(string h) {
+    string x;
+    x = h;
+  }
+}

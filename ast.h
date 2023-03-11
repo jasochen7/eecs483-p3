@@ -31,6 +31,7 @@
 
 #include <stdlib.h>   // for NULL
 #include "location.h"
+#include "list.h"
 #include <unordered_map>
 #include "hashtable.h"
 #include <string>
@@ -51,6 +52,8 @@ class Node
     yyltype *GetLocation()   { return location; }
     void SetParent(Node *p)  { parent = p; }
     Node *GetParent()        { return parent; }
+    Decl* FindDecl(std::string id_name);
+    void InitScope(List<Decl*> *decl_list);
     virtual void Check()     { std::cout << "Base check\n"; }
 };
    

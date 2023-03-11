@@ -16,6 +16,7 @@
 #include "ast.h"
 #include "ast_type.h"
 #include "list.h"
+#include <vector>
 
 class Identifier;
 class Stmt;
@@ -24,20 +25,24 @@ class Decl : public Node
 {
   public:
     Identifier *id;
-  
-  public:
+    std::string GetName();
     Decl(Identifier *name);
     friend std::ostream& operator<<(std::ostream& out, Decl *d) { return out << d->id; }
 };
 
 class VarDecl : public Decl 
 {
-  protected:
-    Type *type;
-    
   public:
+    Type *type;
     VarDecl(Identifier *name, Type *type);
     void Check();
+};
+
+class InterfaceDecl : public Decl 
+{
+  public:
+    List<Decl*> *members;
+    InterfaceDecl(Identifier *name, List<Decl*> *members);
 };
 
 class ClassDecl : public Decl 
@@ -45,20 +50,15 @@ class ClassDecl : public Decl
   protected:
     List<Decl*> *members;
     NamedType *extends;
+    ClassDecl* extendedClass;
     List<NamedType*> *implements;
+    std::unordered_map<NamedType*, InterfaceDecl*> interfaces;
 
   public:
+    bool ValidateInterface(InterfaceDecl* interface);
     ClassDecl(Identifier *name, NamedType *extends, 
               List<NamedType*> *implements, List<Decl*> *members);
-};
-
-class InterfaceDecl : public Decl 
-{
-  protected:
-    List<Decl*> *members;
-    
-  public:
-    InterfaceDecl(Identifier *name, List<Decl*> *members);
+    void Check();
 };
 
 class FnDecl : public Decl 
@@ -71,6 +71,7 @@ class FnDecl : public Decl
   public:
     FnDecl(Identifier *name, Type *returnType, List<VarDecl*> *formals);
     void SetFunctionBody(Stmt *b);
+    bool isSameSignature(FnDecl* other);
 };
 
 #endif

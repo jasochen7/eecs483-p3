@@ -24,17 +24,7 @@ void Program::Check() {
      *      and polymorphism in the node classes.
      */
     // Construct program's scope
-    for (int i = 0; i < decls->NumElements(); ++i){
-      Decl* currentDecl = decls->Nth(i);
-      const char* name = currentDecl->id->name;
-      // report if this decl already exists yo
-      if (scope.find(name) != scope.end()){
-        Decl* oldDecl = scope[name];
-        ReportError::DeclConflict(currentDecl, oldDecl);
-      } else{
-        scope[name] = currentDecl;
-      }
-    }
+    this->InitScope(decls);
 
     // Checking children
     for (int i = 0; i < decls->NumElements(); ++i){

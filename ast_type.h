@@ -15,6 +15,7 @@
 #include "ast.h"
 #include "list.h"
 #include <iostream>
+#include <string>
 
 
 class Type : public Node 
@@ -43,6 +44,9 @@ class NamedType : public Type
     NamedType(Identifier *i);
     
     void PrintToStream(std::ostream& out) { out << id; }
+    std::string GetName() {
+      return id->name;
+    }
 };
 
 class ArrayType : public Type 
