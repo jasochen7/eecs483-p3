@@ -9,6 +9,10 @@
 #include "errors.h"
 
 
+void Expr::Check(){
+  Type* type = GetType();
+}
+
 Type* Expr::GetType(){
   return Type::errorType;
 }
@@ -79,12 +83,18 @@ Type* ArithmeticExpr::GetType(){
     }
     // Types are not the same
     if (lhs_type != rhs_type){
-      ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
+      // Only report if BOTH TYPES are not error types
+      if (lhs_type != Type::errorType && rhs_type != Type::errorType) {
+        ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
+      }
       return Type::errorType;
     }
     // Type is not double or int
     if (lhs_type != Type::intType || lhs_type != Type::doubleType){
-      ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
+      // Only report if BOTH TYPES are not error types
+      if (lhs_type != Type::errorType && rhs_type != Type::errorType) {
+        ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
+      }
       return Type::errorType;
     }
     return lhs_type;
@@ -93,7 +103,10 @@ Type* ArithmeticExpr::GetType(){
   else{
     // Type is not double or int
     if (rhs_type != Type::intType || rhs_type != Type::doubleType) {
-      ReportError::IncompatibleOperand(op, rhs_type);
+      // Only report if type is not error type
+      if (rhs_type != Type::errorType) {
+        ReportError::IncompatibleOperand(op, rhs_type);
+      }
       return Type::errorType;
     }
     return rhs_type;
@@ -105,15 +118,21 @@ Type* RelationalExpr::GetType(){
   Type* rhs_type = right->GetType();
   Type* lhs_type = left->GetType();
   if (rhs_type == Type::errorType || lhs_type == Type::errorType){
-    return Type::errorType;
+    return Type::boolType;
   }
   if (rhs_type != lhs_type) {
-    ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
-    return Type::errorType;
+    // Only report if both types are not errors
+    if (rhs_type != Type::errorType && lhs_type != Type::errorType){
+       ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
+    }
+    return Type::boolType;
   } else{
     if (rhs_type != Type::doubleType || rhs_type != Type::intType){
-      ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
-      return Type::errorType;
+      // Only report if both types are not errors
+      if (rhs_type != Type::errorType && lhs_type != Type::errorType){
+        ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
+      }
+      return Type::boolType;
     }
   }
   return Type::boolType;
@@ -141,8 +160,10 @@ Type* EqualityExpr::GetType() {
     if (lhs_type == Type::nullType || rhs_type == Type::nullType) {
       return Type::boolType;
     } else {
-      ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
-      return Type::errorType;
+      if (lhs_type != Type::errorType && rhs_type != Type::errorType){
+        ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
+      }
+      return Type::boolType;
     }
   }
   // both are basic types
@@ -151,8 +172,10 @@ Type* EqualityExpr::GetType() {
     if (rhs_type == lhs_type){
       return Type::boolType;
     } else {
-      ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
-      return Type::errorType;
+      if (lhs_type != Type::errorType && rhs_type != Type::errorType){
+         ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
+      }
+      return Type::boolType;
     }
   }
 }
@@ -261,6 +284,24 @@ Type* This::GetType(){
 ArrayAccess::ArrayAccess(yyltype loc, Expr *b, Expr *s) : LValue(loc) {
     (base=b)->SetParent(this); 
     (subscript=s)->SetParent(this);
+}
+
+Type* ArrayAccess::GetType() {
+    Type* subscript_type = subscript->GetType();
+    // subscript not an int
+    if (subscript_type != Type::intType) {
+      ReportError::SubscriptNotInteger(subscript);
+      return Type::errorType;
+    }
+    Type* base_type = base->GetType();
+    ArrayType* base_array_type = dynamic_cast<ArrayType*>(base_type);
+    // Base expr is of array type;
+    if (base_array_type) {
+      return base_array_type->elemType;
+    }
+    // Base expr is not of array type;
+    ReportError::BracketsOnNonArray(base);
+    return Type::errorType;
 }
      
 FieldAccess::FieldAccess(Expr *b, Identifier *f) 

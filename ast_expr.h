@@ -29,6 +29,7 @@ class Expr : public Stmt
     Expr(yyltype loc) : Stmt(loc) {}
     Expr() : Stmt() {}
     virtual Type* GetType();
+    void Check();
 };
 
 /* This node type is used for those places where an expression is optional.
@@ -168,6 +169,7 @@ class ArrayAccess : public LValue
     Expr *base, *subscript;
     
   public:
+    Type* GetType();
     ArrayAccess(yyltype loc, Expr *base, Expr *subscript);
 };
 
@@ -199,6 +201,7 @@ class Call : public Expr
     List<Expr*> *actuals;
     
   public:
+    // Type* GetType();
     Call(yyltype loc, Expr *base, Identifier *field, List<Expr*> *args);
 };
 

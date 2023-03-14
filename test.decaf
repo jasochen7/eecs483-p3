@@ -4,10 +4,30 @@ class A {
 
 class B{
   int y;
+  
+}
+
+int function() {
+  int z;
+  string ayo;
+  return z == ayo;
+}
+
+int function2(){
+  double x;
+  int yo;
+  string y400;
+  return y400 + yo + x;
 }
 
 void main(){
   A a;
   B b;
-  a = b = null;
+  double t;
+  double z;
+  int ayo;
+  int[] x;
+  b[4] = 5;
+  t = t + ayo;
+  x[ayo] = 4;
 }
