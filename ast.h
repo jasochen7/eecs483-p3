@@ -54,7 +54,7 @@ class Node
     Node *GetParent()        { return parent; }
     Decl* FindDecl(std::string id_name);
     void InitScope(List<Decl*> *decl_list);
-    virtual void Check()     { std::cout << "Base check\n"; }
+    virtual void Check()     { ; }
 };
    
 

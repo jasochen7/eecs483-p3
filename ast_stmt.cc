@@ -38,6 +38,31 @@ StmtBlock::StmtBlock(List<VarDecl*> *d, List<Stmt*> *s) {
     (stmts=s)->SetParentAll(this);
 }
 
+void StmtBlock::Check() {
+   // initialize scope with parameters
+   for (int i = 0; i < decls->NumElements(); ++i){
+      Decl* currentDecl = decls->Nth(i);
+      const char* name = currentDecl->id->name;
+      // report if this var already exists yo
+      if (scope.find(name) != scope.end()){
+        Decl* oldDecl = scope[name];
+        ReportError::DeclConflict(currentDecl, oldDecl);
+      } else{
+        scope[name] = currentDecl;
+      }
+   }
+   // Call check on VarDecls
+   for (int i = 0; i < decls->NumElements(); ++i){
+      VarDecl* currentDecl = decls->Nth(i);
+      currentDecl->Check();
+   }
+   // Call check on Statements
+   for (int i = 0; i < stmts->NumElements(); ++i){
+      Stmt* stmt = stmts->Nth(i);
+      stmt->Check();
+   }
+}
+
 ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) { 
     Assert(t != NULL && b != NULL);
     (test=t)->SetParent(this); 
@@ -60,6 +85,10 @@ IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) {
 ReturnStmt::ReturnStmt(yyltype loc, Expr *e) : Stmt(loc) { 
     Assert(e != NULL);
     (expr=e)->SetParent(this);
+}
+
+void ReturnStmt::Check() {
+    
 }
   
 PrintStmt::PrintStmt(List<Expr*> *a) {    

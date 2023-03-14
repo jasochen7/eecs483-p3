@@ -1,18 +1,19 @@
-interface Animal {
-  void init();
-}
-
-interface Human {
-  Animal check(Human h);
-}
-
-class Dog implements Animal, Human {
-  void init() {
-    string name;
-    int name;
+class Animal {
+  void init(){
+    int u;
   }
-  Animal check(string h) {
-    string x;
-    x = h;
+}
+
+interface Thing {
+  void init(int y);
+}
+
+class Bird extends Animal implements Thing {
+  void print() {
+    int x;
+  }
+  void init(int y) {
+    int x;
+    int x;
   }
 }

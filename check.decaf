@@ -1,0 +1,10 @@
+class A {
+    int x;
+    int y;
+    A z;
+    void z() {
+        bool q;
+        q = z == x;
+    }
+}
+

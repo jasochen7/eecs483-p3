@@ -16,7 +16,7 @@
 #include "list.h"
 #include <iostream>
 #include <string>
-
+class ClassDecl;
 
 class Type : public Node 
 {
@@ -33,6 +33,7 @@ class Type : public Node
     virtual void PrintToStream(std::ostream& out) { out << typeName; }
     friend std::ostream& operator<<(std::ostream& out, Type *t) { t->PrintToStream(out); return out; }
     virtual bool IsEquivalentTo(Type *other) { return this == other; }
+    void Check();
 };
 
 class NamedType : public Type 
@@ -41,8 +42,10 @@ class NamedType : public Type
     Identifier *id;
     
   public:
+    ClassDecl* GetClassDecl();
     NamedType(Identifier *i);
-    
+    void Check();
+    bool Compatible(NamedType* other);
     void PrintToStream(std::ostream& out) { out << id; }
     std::string GetName() {
       return id->name;
@@ -56,7 +59,7 @@ class ArrayType : public Type
 
   public:
     ArrayType(yyltype loc, Type *elemType);
-    
+    void Check();
     void PrintToStream(std::ostream& out) { out << elemType << "[]"; }
 };
 

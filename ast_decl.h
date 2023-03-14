@@ -43,21 +43,22 @@ class InterfaceDecl : public Decl
   public:
     List<Decl*> *members;
     InterfaceDecl(Identifier *name, List<Decl*> *members);
+    void Check();
 };
 
 class ClassDecl : public Decl 
 {
-  protected:
+  public:
     List<Decl*> *members;
     NamedType *extends;
     ClassDecl* extendedClass;
     List<NamedType*> *implements;
     std::unordered_map<NamedType*, InterfaceDecl*> interfaces;
 
-  public:
     bool ValidateInterface(InterfaceDecl* interface);
     ClassDecl(Identifier *name, NamedType *extends, 
               List<NamedType*> *implements, List<Decl*> *members);
+    void InitClassScope(ClassDecl* base_class);
     void Check();
 };
 
@@ -69,9 +70,13 @@ class FnDecl : public Decl
     Stmt *body;
     
   public:
+    FnDecl *extends = NULL;
+    FnDecl *implements = NULL;
+    bool inherited_function_correct = true;
     FnDecl(Identifier *name, Type *returnType, List<VarDecl*> *formals);
     void SetFunctionBody(Stmt *b);
     bool isSameSignature(FnDecl* other);
+    void Check();
 };
 
 #endif

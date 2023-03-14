@@ -45,6 +45,7 @@ class StmtBlock : public Stmt
     
   public:
     StmtBlock(List<VarDecl*> *variableDeclarations, List<Stmt*> *statements);
+    void Check();
 };
 
   
@@ -101,6 +102,7 @@ class ReturnStmt : public Stmt
     Expr *expr;
   
   public:
+    void Check();
     ReturnStmt(yyltype loc, Expr *expr);
 };
 

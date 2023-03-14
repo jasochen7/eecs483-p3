@@ -1,0 +1,13 @@
+class A {
+  int x;
+}
+
+class B{
+  int y;
+}
+
+void main(){
+  A a;
+  B b;
+  a = b = null;
+}

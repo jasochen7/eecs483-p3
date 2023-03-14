@@ -15,6 +15,7 @@
 
 #include "ast.h"
 #include "ast_stmt.h"
+#include "ast_type.h"
 #include "list.h"
 
 class NamedType; // for new
@@ -24,8 +25,10 @@ class Type; // for NewArray
 class Expr : public Stmt 
 {
   public:
+    //Type* type;
     Expr(yyltype loc) : Stmt(loc) {}
     Expr() : Stmt() {}
+    virtual Type* GetType();
 };
 
 /* This node type is used for those places where an expression is optional.
@@ -42,6 +45,7 @@ class IntConstant : public Expr
     int value;
   
   public:
+    Type* GetType();
     IntConstant(yyltype loc, int val);
 };
 
@@ -51,6 +55,7 @@ class DoubleConstant : public Expr
     double value;
     
   public:
+    Type* GetType();
     DoubleConstant(yyltype loc, double val);
 };
 
@@ -60,6 +65,7 @@ class BoolConstant : public Expr
     bool value;
     
   public:
+    Type* GetType();
     BoolConstant(yyltype loc, bool val);
 };
 
@@ -69,12 +75,14 @@ class StringConstant : public Expr
     char *value;
     
   public:
+    Type* GetType();
     StringConstant(yyltype loc, const char *val);
 };
 
 class NullConstant: public Expr 
 {
   public: 
+    Type* GetType();
     NullConstant(yyltype loc) : Expr(loc) {}
 };
 
@@ -95,6 +103,7 @@ class CompoundExpr : public Expr
     Expr *left, *right; // left will be NULL if unary
     
   public:
+    virtual Type* GetType();
     CompoundExpr(Expr *lhs, Operator *op, Expr *rhs); // for binary
     CompoundExpr(Operator *op, Expr *rhs);             // for unary
 };
@@ -104,17 +113,20 @@ class ArithmeticExpr : public CompoundExpr
   public:
     ArithmeticExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     ArithmeticExpr(Operator *op, Expr *rhs) : CompoundExpr(op,rhs) {}
+    Type* GetType();
 };
 
 class RelationalExpr : public CompoundExpr 
 {
   public:
+    Type* GetType();
     RelationalExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
 };
 
 class EqualityExpr : public CompoundExpr 
 {
   public:
+    Type* GetType();
     EqualityExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     const char *GetPrintNameForNode() { return "EqualityExpr"; }
 };
@@ -122,6 +134,7 @@ class EqualityExpr : public CompoundExpr
 class LogicalExpr : public CompoundExpr 
 {
   public:
+    Type* GetType();
     LogicalExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     LogicalExpr(Operator *op, Expr *rhs) : CompoundExpr(op,rhs) {}
     const char *GetPrintNameForNode() { return "LogicalExpr"; }
@@ -130,6 +143,7 @@ class LogicalExpr : public CompoundExpr
 class AssignExpr : public CompoundExpr 
 {
   public:
+    Type* GetType();
     AssignExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     const char *GetPrintNameForNode() { return "AssignExpr"; }
 };
@@ -137,6 +151,7 @@ class AssignExpr : public CompoundExpr
 class LValue : public Expr 
 {
   public:
+    virtual Type* GetType();
     LValue(yyltype loc) : Expr(loc) {}
 };
 
@@ -144,6 +159,7 @@ class This : public Expr
 {
   public:
     This(yyltype loc) : Expr(loc) {}
+    Type* GetType();
 };
 
 class ArrayAccess : public LValue 
@@ -165,8 +181,9 @@ class FieldAccess : public LValue
   protected:
     Expr *base;	// will be NULL if no explicit base
     Identifier *field;
-    
+
   public:
+    Type* GetType();
     FieldAccess(Expr *base, Identifier *field); //ok to pass NULL base
 };
 
