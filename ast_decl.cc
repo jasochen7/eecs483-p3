@@ -135,19 +135,16 @@ void ClassDecl::Check() {
       }
    }
    InitClassScope(base_class);
-   /* 
-   If function is inherited from a class, we may want to store this information.
-   
-   */
    // If this class implements other jawns
    for (int i = 0; i < this->implements->NumElements(); ++i){
     NamedType* interface_type = this->implements->Nth(i);
     InterfaceDecl* interface = this->interfaces[interface_type];
     // Validate Inferfaces
-    if (!this->ValidateInterface(interface)) {
+    if (interface && !this->ValidateInterface(interface)) {
       ReportError::InterfaceNotImplemented(this, interface_type);
     }
    }
+   
     // Check the members
    for (int i = 0; i < this->members->NumElements(); ++i){
     Decl* member = this->members->Nth(i);
@@ -177,6 +174,8 @@ bool ClassDecl::ValidateInterface(InterfaceDecl* interface){
       // shit's not the same function
       if (!impl_function->isSameSignature(class_func)){
         return false;
+      } else {
+        impl_function->implementedBy.push_back(class_func);
       }
     }
   }

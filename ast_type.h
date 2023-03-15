@@ -46,6 +46,7 @@ class NamedType : public Type
     NamedType(Identifier *i);
     void Check();
     bool Compatible(NamedType* other);
+    bool isEquivalentTo(Type* other);
     void PrintToStream(std::ostream& out) { out << id; }
     std::string GetName() {
       return id->name;
@@ -58,6 +59,7 @@ class ArrayType : public Type
     Type *elemType;
     ArrayType(yyltype loc, Type *elemType);
     void Check();
+    bool isEquivalentTo(Type* other);
     void PrintToStream(std::ostream& out) { out << elemType << "[]"; }
 };
 

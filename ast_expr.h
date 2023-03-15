@@ -195,13 +195,12 @@ class FieldAccess : public LValue
  * and sort it out later. */
 class Call : public Expr 
 {
-  protected:
+  public:
     Expr *base;	// will be NULL if no explicit base
     Identifier *field;
     List<Expr*> *actuals;
     
-  public:
-    // Type* GetType();
+    Type* GetType();
     Call(yyltype loc, Expr *base, Identifier *field, List<Expr*> *args);
 };
 

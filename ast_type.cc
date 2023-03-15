@@ -69,7 +69,28 @@ bool NamedType::Compatible(NamedType* other) {
     my_class = my_class->extendedClass;
   }
   return false;
-  
+}
+
+bool NamedType::isEquivalentTo(Type *o) {
+  NamedType* other = dynamic_cast<NamedType*>(o);
+  if (!other) {
+    return o == Type::nullType;
+  }
+  ClassDecl* my_class = this->GetClassDecl();
+  // If the two classes have the same name
+  while (my_class) {
+    if (my_class->GetName() == other->GetName()) {
+      return true;
+    }
+    for (int i = 0; i < my_class->implements->NumElements(); i++) {
+      NamedType* implType = my_class->implements->Nth(i);
+      if (implType->GetName() == other->GetName()) {
+        return true;
+      }
+    }
+    my_class = my_class->extendedClass;
+  }
+  return false;
 }
 
 void NamedType::Check(){
@@ -98,6 +119,14 @@ void NamedType::Check(){
 ArrayType::ArrayType(yyltype loc, Type *et) : Type(loc) {
     Assert(et != NULL);
     (elemType=et)->SetParent(this);
+}
+
+bool ArrayType::isEquivalentTo(Type *o) {
+  ArrayType* other = dynamic_cast<ArrayType*>(o);
+  if (!other) {
+    return o == Type::nullType;
+  }
+  return elemType->IsEquivalentTo(other->elemType);
 }
 
 void ArrayType::Check(){

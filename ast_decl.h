@@ -64,12 +64,11 @@ class ClassDecl : public Decl
 
 class FnDecl : public Decl 
 {
-  protected:
+  public:
     List<VarDecl*> *formals;
     Type *returnType;
     Stmt *body;
-    
-  public:
+    std::vector<FnDecl*> implementedBy;
     FnDecl *extends = NULL;
     FnDecl *implements = NULL;
     bool inherited_function_correct = true;

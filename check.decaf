@@ -1,10 +1,29 @@
-class A {
+interface Yo {
+  void print();
+}
+
+class A implements Yo {
+  void print(){
     int x;
     int y;
-    A z;
-    void z() {
-        bool q;
-        q = z == x;
-    }
+    y = this.yo();
+  }
+
+  void bob(int z){
+    int yyy;
+  }
+}
+
+class B extends A{
+  int y;
+  int x;
+  int[] r;
+  void main(){
+    r = null;
+    A a;
+    a.bob();
+    r.length(4);
+    r.retarded();
+  }
 }
 

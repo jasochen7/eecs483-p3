@@ -1,0 +1,13 @@
+interface A {
+    void print();
+    void print(int x);
+}
+
+class B implements A {
+    void print() {
+        int x;
+    }
+    void print(int x) {
+        int x;
+    }
+}
