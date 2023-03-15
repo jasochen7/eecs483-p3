@@ -28,8 +28,46 @@ Type::Type(const char *n) {
     typeName = strdup(n);
 }
 
+bool isCompatible(Type* lhs, Type* rhs){
+  ArrayType* lhs_array = dynamic_cast<ArrayType*>(lhs);
+  ArrayType* rhs_array = dynamic_cast<ArrayType*>(rhs); 
+  NamedType* lhs_named = dynamic_cast<NamedType*>(lhs);
+  NamedType* rhs_named = dynamic_cast<NamedType*>(rhs);
+  if (lhs_array){
+    // If the rhs is also an array
+    if (rhs_array) {
+      ArrayType* lhs_elem_array = dynamic_cast<ArrayType*>(lhs_array->elemType);
+      ArrayType* rhs_elem_array = dynamic_cast<ArrayType*>(rhs_array->elemType);
+      // Arrays of arrays
+      if (lhs_elem_array && rhs_elem_array) {
+        return isCompatible(rhs_array->elemType, lhs_array->elemType);
+      }
+      NamedType* lhs_elem_named = dynamic_cast<NamedType*>(lhs_array->elemType);
+      NamedType* rhs_elem_named = dynamic_cast<NamedType*>(rhs_array->elemType);
+      if (lhs_elem_named && rhs_elem_named) {
+        return lhs_elem_named->GetName() == rhs_elem_named->GetName(); 
+      } else {
+        return lhs_array->elemType == rhs_array->elemType;
+      }
+    } else if (lhs == Type::nullType){
+      return true;
+    } else {
+      return false;
+    }
+  }
+  //
+  if (lhs_named) {
+    if (rhs_named){
+      return lhs_named->Compatible(rhs_named);
+    } else if (lhs == Type::nullType){
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return lhs == rhs;
+}
 void Type::Check(){
-  
 }
 
 ClassDecl* NamedType::GetClassDecl(){
@@ -72,10 +110,12 @@ bool NamedType::Compatible(NamedType* other) {
 }
 
 bool NamedType::isEquivalentTo(Type *o) {
-  NamedType* other = dynamic_cast<NamedType*>(o);
-  if (!other) {
-    return o == Type::nullType;
+  std::cout << "Chcking equivlanecy" << std::endl;
+  if (o == Type::nullType) {
+    std::cout << "NULL";
+    return true;
   }
+  NamedType* other = dynamic_cast<NamedType*>(o);
   ClassDecl* my_class = this->GetClassDecl();
   // If the two classes have the same name
   while (my_class) {

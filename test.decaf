@@ -1,5 +1,12 @@
-void main() {
-  int x;
+class A {
+  int y;
+}
 
-  x = 5 + 3;
+class B {
+  int z;
+}
+
+void main(){
+  int[] x;
+  x = NewArray(3 + 6.0, int[][]);
 }

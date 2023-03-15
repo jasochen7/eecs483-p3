@@ -200,26 +200,27 @@ class Call : public Expr
     Identifier *field;
     List<Expr*> *actuals;
     
+    void CheckActuals();
     Type* GetType();
     Call(yyltype loc, Expr *base, Identifier *field, List<Expr*> *args);
 };
 
 class NewExpr : public Expr
 {
-  protected:
+  public:
     NamedType *cType;
     
-  public:
+    Type* GetType();
     NewExpr(yyltype loc, NamedType *clsType);
 };
 
 class NewArrayExpr : public Expr
 {
-  protected:
+  public:
     Expr *size;
     Type *elemType;
     
-  public:
+    Type* GetType();
     NewArrayExpr(yyltype loc, Expr *sizeExpr, Type *elemType);
 };
 

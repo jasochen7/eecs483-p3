@@ -18,6 +18,7 @@
 #include <string>
 class ClassDecl;
 
+
 class Type : public Node 
 {
   protected:
@@ -33,7 +34,7 @@ class Type : public Node
     virtual void PrintToStream(std::ostream& out) { out << typeName; }
     friend std::ostream& operator<<(std::ostream& out, Type *t) { t->PrintToStream(out); return out; }
     virtual bool IsEquivalentTo(Type *other) { return this == other; }
-    void Check();
+    virtual void Check();
 };
 
 class NamedType : public Type 
@@ -63,5 +64,5 @@ class ArrayType : public Type
     void PrintToStream(std::ostream& out) { out << elemType << "[]"; }
 };
 
- 
+bool isCompatible(Type* lhs, Type* rhs);
 #endif

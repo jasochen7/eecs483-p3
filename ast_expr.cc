@@ -72,17 +72,13 @@ Type* CompoundExpr::GetType(){
 }
 
 Type* ArithmeticExpr::GetType(){
-  Type* rhs_type = right->GetType();
-  if (rhs_type == Type::errorType) return Type::errorType;
   // Binary
   if (left) {
     Type* lhs_type = left->GetType();
-    // Lhs type is bogus
-    if (lhs_type == Type::errorType){
-      return Type::errorType;
-    }
+    Type* rhs_type = right->GetType();
+    if (rhs_type == Type::errorType || lhs_type == Type::errorType) return Type::errorType;
     // Types are not the same
-    if (!rhs_type->IsEquivalentTo(lhs_type)){
+    if (!isCompatible(rhs_type, lhs_type)){
       // std::cout << "equivalency issue" << std::endl;
       ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
       return Type::errorType;
@@ -96,6 +92,8 @@ Type* ArithmeticExpr::GetType(){
   }
   // Unary minus
   else{
+    Type* rhs_type = right->GetType();
+    if (rhs_type == Type::errorType) return Type::errorType;
     // Type is not double or int
     if (rhs_type != Type::intType && rhs_type != Type::doubleType) {
       ReportError::IncompatibleOperand(op, rhs_type);
@@ -107,14 +105,14 @@ Type* ArithmeticExpr::GetType(){
 
 Type* RelationalExpr::GetType(){
   // <, >, <=, >=
-  Type* rhs_type = right->GetType();
   Type* lhs_type = left->GetType();
+  Type* rhs_type = right->GetType();
   // Return errortype if either is error
   if (rhs_type == Type::errorType || lhs_type == Type::errorType){
     return Type::boolType;
   }
   // If the types aren't compatible
-  if (!lhs_type->IsEquivalentTo(rhs_type)) {
+  if (!isCompatible(lhs_type, rhs_type)) {
     ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
     return Type::boolType;
   } else{
@@ -128,13 +126,13 @@ Type* RelationalExpr::GetType(){
 }
 
 Type* EqualityExpr::GetType() {
-  Type* rhs_type = right->GetType();
   Type* lhs_type = left->GetType();
+  Type* rhs_type = right->GetType();
   // return errortype if either is errortype
   if (rhs_type == Type::errorType || lhs_type == Type::errorType){
     return Type::boolType;
   }
-  if (!lhs_type->IsEquivalentTo(rhs_type) && !rhs_type->IsEquivalentTo(lhs_type)){
+  if (!isCompatible(lhs_type, rhs_type) && !isCompatible(rhs_type, lhs_type)){
     ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
   }
   return Type::boolType;
@@ -210,7 +208,7 @@ Type *AssignExpr::GetType() {
     return Type::errorType;
   }
   // If lhs not compatible with rhs
-  if (!rhs_type->IsEquivalentTo(lhs_type)){
+  if (!isCompatible(rhs_type, lhs_type)){
     ReportError::IncompatibleOperands(op, lhs_type, rhs_type);
     return Type::errorType;
   } else{
@@ -431,7 +429,7 @@ Type* FieldAccess::GetType(){
       return Type::errorType;
     }
   }
-
+  std::cout << "reached end" << std::endl;
   return Type::errorType;
 }
 
@@ -442,6 +440,14 @@ Call::Call(yyltype loc, Expr *b, Identifier *f, List<Expr*> *a) : Expr(loc)  {
     if (base) base->SetParent(this);
     (field=f)->SetParent(this);
     (actuals=a)->SetParentAll(this);
+}
+
+void Call::CheckActuals() {
+  for (int i = 0; i < actuals->NumElements(); ++i){
+    //std::cout << "checking actual: " << i << std::endl;
+    Expr* actual = actuals->Nth(i);
+    Type* actual_type = actual->GetType();
+  }
 }
 
 Type* Call::GetType() {
@@ -467,6 +473,7 @@ Type* Call::GetType() {
     else {
       Type* base_type = base->GetType();
       if (base_type == Type::errorType) {
+        CheckActuals();
         return Type::errorType;
       }
       ArrayType* array_base = dynamic_cast<ArrayType*>(base_type);
@@ -474,6 +481,7 @@ Type* Call::GetType() {
       if (array_base) {
         if (strcmp(field->name, "length")){
           ReportError::FieldNotFoundInBase(field, array_base);
+          CheckActuals();
           return Type::errorType;
         }
         // calling length on ArrayType
@@ -481,6 +489,7 @@ Type* Call::GetType() {
           //verify args is 0 for length()
           if (actuals->NumElements() != 0){
             ReportError::NumArgsMismatch(field, 0, actuals->NumElements());
+            CheckActuals();
             return Type::errorType;
           }
           // Return int
@@ -512,6 +521,9 @@ Type* Call::GetType() {
                 break;
               }
             }
+            if (!current->extends) {
+              break;
+            }
             current = current->extends->GetClassDecl();
           }
         }
@@ -531,6 +543,7 @@ Type* Call::GetType() {
       // If base is not namedtype
       else {
           ReportError::FieldNotFoundInBase(field, base_type);
+          CheckActuals();
           return Type::errorType;
       }
     }
@@ -540,15 +553,17 @@ Type* Call::GetType() {
       // If num args not the same
       if (expected_args != given_args){
         ReportError::NumArgsMismatch(field, expected_args, given_args);
+        CheckActuals();
         return Type::errorType;
       }
       // Look through args and match them
       for (int i = 0; i < actuals->NumElements(); ++i){
+        //std::cout << "checking actual: " << i << std::endl;
         Expr* actual = actuals->Nth(i);
         Type* actual_type = actual->GetType();
         Type* formal_type = found_func->formals->Nth(i)->type;
-        if (!actual_type->IsEquivalentTo(formal_type)){
-          ReportError::ArgMismatch(actual, i, actual_type, formal_type);
+        if (!isCompatible(actual_type, formal_type)){
+          ReportError::ArgMismatch(actual, i + 1, actual_type, formal_type);
           return Type::errorType;
         }
       }
@@ -558,9 +573,11 @@ Type* Call::GetType() {
       // If there is a base
       if (base) {
         ReportError::FieldNotFoundInBase(field, base->GetType());
+        CheckActuals();
         return Type::errorType;
       } else {
         ReportError::IdentifierNotDeclared(field, reasonT::LookingForFunction);
+        CheckActuals();
         return Type::errorType;
       }
     }
@@ -572,11 +589,50 @@ NewExpr::NewExpr(yyltype loc, NamedType *c) : Expr(loc) {
   (cType=c)->SetParent(this);
 }
 
+Type* NewExpr::GetType() {
+  ClassDecl* class_decl = cType->GetClassDecl();
+  if (class_decl == NULL) {
+    ReportError::IdentifierNotDeclared(cType->id, reasonT::LookingForClass);
+    return Type::errorType;
+  }
+  return cType;
+}
 
 NewArrayExpr::NewArrayExpr(yyltype loc, Expr *sz, Type *et) : Expr(loc) {
     Assert(sz != NULL && et != NULL);
     (size=sz)->SetParent(this);
     (elemType=et)->SetParent(this);
+}
+
+Type* NewArrayExpr::GetType() {
+    Type* size_type = size->GetType();
+    bool errored = false;
+    if (size_type == Type::errorType){
+    }
+    else if (size_type != Type::intType) {
+      ReportError::NewArraySizeNotInteger(size);
+      // errored = true;
+    }
+    else if (elemType == Type::errorType) {
+      errored = true;
+    }
+    elemType->Check();
+    // NamedType *obj_type = dynamic_cast<NamedType*>(elemType);
+    // if (obj_type) {
+    //   ClassDecl* class_decl = obj_type->GetClassDecl();
+    //   if (class_decl == NULL) {
+    //     ReportError::IdentifierNotDeclared(obj_type->id, reasonT::LookingForClass);
+    //     return Type::errorType;
+    //   }
+    // }
+    // // If the element is an array
+    // ArrayType *arr_type = dynamic_cast<ArrayType*>(elemType);
+    // if (arr_type) {
+    //   NamedType* named_arr = dynamic_cast<NamedType*>(arr_type->elemType);
+    //   named_arr->Check();
+    // }
+    //std::cout << errored << std::endl;
+    return errored ? Type::errorType : new ArrayType(*this->location, elemType);
 }
 
        
